@@ -22,8 +22,8 @@ jobs:
 
     - name: Send to Slack
       env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       run: |
         curl -X POST -H 'Content-type: application/json' --data '{
           "text": "'"$(cat converted_body.txt | sed 's/"/\\"/g')"'"
-        }' $SLACK_WEBHOOK
+        }' $SLACK_WEBHOOK_URL
