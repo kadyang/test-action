@@ -1,31 +1,78 @@
-name: Slack Notification on Labeled PR
+name: PR to Slack
+
 on:
   pull_request_target:
-    types: [labeled]
+    types: [ labeled ]
 
 jobs:
-  send_to_slack:
+  slackNotification:
+    if: ${{ github.event.label.name == '👀  Needs Review' }}
+    name: Slack Notification
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Extract PR body and convert images to links
-        id: extract_body
-        run: |
-          echo "::set-output name=body::$(jq -r .pull_request.body $GITHUB_EVENT_PATH | sed 's/!\[\]\([^]]*\)/[![Image](\1)](\1)/g')"
-
-      - name: Send message to Slack
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ steps.extract_body.outputs.body }}
-        run: |
-          curl -X POST -H 'Content-type: application/json' --data '{
-              "text": "'"$PR_TITLE"'",
-              "attachments": [
-                {
-                  "text": "'"$PR_BODY"'"
-                }
-              ]
-            }' $SLACK_WEBHOOK_URL
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_USERNAME: 點對點 Github Action
+          SLACK_CUSTOM_PAYLOAD: '{
+	"username" : "點對點 Github Action 機器人",
+    "icon_emoji" : ":chino-star:",
+	"blocks": [
+		{
+			"type": "header",
+			"text": {
+				"type": "plain_text",
+				"text": "有新的 PR 請幫看 :pray:",
+				"emoji": true
+			}
+		},
+		{
+			"type": "section",
+			"fields": [
+				{
+					"type": "mrkdwn",
+					"text": "*Creator*\n${{ github.event.pull_request.user.login }}"
+				}
+			]
+		},
+		{
+			"type": "section",
+			"fields": [
+				{
+					"type": "mrkdwn",
+					"text": "*Label*\n${{ github.event.label.name }}"
+				}
+			]
+		},
+		{
+			"type": "section",
+			"fields": [
+				{
+					"type": "mrkdwn",
+					"text": "*Link*\n<${{ github.event.pull_request.html_url }}>"
+				}
+			]
+		},
+		{
+			"type": "section",
+			"fields": [
+				{
+					"type": "mrkdwn",
+					"text": "*Title*\n${{ github.event.pull_request.title }}"
+				}
+			]
+		},
+		{
+			"type": "section",
+			"fields": [
+				{
+					"type": "mrkdwn",
+					"text": "*Message*\n${{ github.event.pull_request.body }}"
+				}
+			]
+		}
+	]
+}'
