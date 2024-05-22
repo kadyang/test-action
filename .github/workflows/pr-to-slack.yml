@@ -6,7 +6,6 @@ on:
 
 jobs:
   slackNotification:
-    if: ${{ github.event.label.name == '👀  Needs Review' }}
     name: Slack Notification
     runs-on: ubuntu-latest
     steps:
