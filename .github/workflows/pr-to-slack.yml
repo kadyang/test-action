@@ -18,7 +18,9 @@ jobs:
 
     - name: Convert image links to hyperlinks
       id: convert_images
-      run: echo "${{ steps.pr_body.outputs.body }}" | sed -E 's/!\[([^\]]+)\]\(([^\)]+)\)/[\1](\2)/g' > converted_body.txt
+      run: |
+        body=$(echo "${{ steps.pr_body.outputs.body }}" | sed -E 's/!\[([^\]]+)\]\(([^\)]+)\)/[\1](\2)/g')
+        echo "$body" > converted_body.txt
 
     - name: Send to Slack
       env:
