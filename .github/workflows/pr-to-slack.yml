@@ -14,7 +14,7 @@ jobs:
 
     - name: Get PR body
       id: pr_body
-      run: echo "::set-output name=body::$(jq -r .pull_request.body $GITHUB_EVENT_PATH)"
+      run: echo "::set-output name=body::$(jq -r '.pull_request.body' $GITHUB_EVENT_PATH)"
 
     - name: Convert image links to hyperlinks
       id: convert_images
