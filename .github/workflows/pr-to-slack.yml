@@ -14,12 +14,15 @@ jobs:
 
     - name: Get PR body
       id: pr_body
-      run: echo "::set-output name=body::$(jq -r '.pull_request.body' $GITHUB_EVENT_PATH)"
+      run: |
+        body=$(cat $GITHUB_EVENT_PATH | jq -r .pull_request.body)
+        echo "::set-output name=body::$body"
 
     - name: Convert image links to hyperlinks
       id: convert_images
       run: |
-        body=$(echo "${{ steps.pr_body.outputs.body }}" | sed -E 's/!\[([^\]]+)\]\(([^\)]+)\)/[\1](\2)/g')
+        body="${{ steps.pr_body.outputs.body }}"
+        body=$(echo "$body" | sed -E 's/!\[([^\]]+)\]\(([^\)]+)\)/[\1](\2)/g')
         echo "$body" > converted_body.txt
 
     - name: Send to Slack
