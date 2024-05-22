@@ -1,7 +1,7 @@
 name: Send PR Body to Slack
 
 on:
-  pull_request:
+  pull_request_target:
     types: [labeled]
 
 jobs:
@@ -25,5 +25,4 @@ jobs:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       run: |
         curl -X POST -H 'Content-type: application/json' --data '{
-          "text": "'"$(cat converted_body.txt | sed 's/"/\\"/g')"'"
-        }' $SLACK_WEBHOOK
+          "text": "'"$(cat converted_body.txt | sed '
