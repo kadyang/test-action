@@ -15,13 +15,12 @@ jobs:
     - name: Get PR body
       id: pr_body
       run: |
-        echo "::set-output name=body::$(jq -n --argjson body "$(cat $GITHUB_EVENT_PATH | jq -r .pull_request.body)" '{body: $body}')"
+        echo "::set-output name=body::$(cat $GITHUB_EVENT_PATH | jq -r .pull_request.body)"
 
     - name: Convert image links to hyperlinks
       id: convert_images
       run: |
         body="${{ steps.pr_body.outputs.body }}"
-        body=$(echo "$body" | jq -r .body)
         body=$(echo "$body" | sed -E 's/!\[([^\]]+)\]\(([^\)]+)\)/[\1](\2)/g')
         echo "$body" > converted_body.txt
 
