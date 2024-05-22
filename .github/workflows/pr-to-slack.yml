@@ -18,6 +18,8 @@ jobs:
       - name: Send message to Slack
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ steps.extract_body.outputs.body }}
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{
               "text": "'"$PR_TITLE"'",
@@ -27,6 +29,3 @@ jobs:
                 }
               ]
             }' $SLACK_WEBHOOK
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ steps.extract_body.outputs.body }}
