@@ -1,5 +1,4 @@
-name: Send PR Body to Slack
-
+name: Slack Notification on Labeled PR
 on:
   pull_request_target:
     types: [labeled]
@@ -7,27 +6,27 @@ on:
 jobs:
   send_to_slack:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Get PR body
-      id: pr_body
-      run: |
-        echo "::set-output name=body::$(cat $GITHUB_EVENT_PATH | jq -r .pull_request.body)"
+      - name: Extract PR body and convert images to links
+        id: extract_body
+        run: |
+          echo "::set-output name=body::$(jq -r .pull_request.body $GITHUB_EVENT_PATH | sed 's/!\[\]\([^]]*\)/[![Image](\1)](\1)/g')"
 
-    - name: Convert image links to hyperlinks
-      id: convert_images
-      run: |
-        body="${{ steps.pr_body.outputs.body }}"
-        body=$(echo "$body" | sed -E 's/!\[([^\]]+)\]\(([^\)]+)\)/[\1](\2)/g')
-        echo "$body" > converted_body.txt
-
-    - name: Send to Slack
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      run: |
-        curl -X POST -H 'Content-type: application/json' --data '{
-          "text": "'"$(cat converted_body.txt | sed 's/"/\\"/g')"'"
-        }' $SLACK_WEBHOOK_URL
+      - name: Send message to Slack
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+              "text": "'"$PR_TITLE"'",
+              "attachments": [
+                {
+                  "text": "'"$PR_BODY"'"
+                }
+              ]
+            }' $SLACK_WEBHOOK
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ steps.extract_body.outputs.body }}
