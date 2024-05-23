@@ -19,8 +19,8 @@ jobs:
           PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -0777 -ne 'print $1 if /(## Service Name\s*.*https:\/\/kkday\.atlassian\.net\/.*?\n)/s')
           # 置換 <img> 標籤並轉換為 Slack 支持的格式
           PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
-          # 處理雙引號為單引號, 避免 slack api 錯誤
-          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g')
+          # 處理雙引號為單引號, 換行為轉為文字, 避免 slack api 錯誤
+          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g' | perl -pe 's/\n/\\n/g')
           # 這邊不能使用 set-output, 結果變數會只有第一行, 要這樣寫才能接受多行
           {
             echo 'JSON_RESPONSE<<EOF'
