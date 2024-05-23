@@ -21,8 +21,9 @@ jobs:
                   PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -0777 -ne 'print $1 if /(## Service Name\s*.*https:\/\/kkday\.atlassian\.net\/.*?\n)/s')
                   # 置換 <img> 標籤並轉換為 Slack 支持的格式
                   PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
-                  # 處理雙引號為單引號, 避免 slack api 錯誤
-                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g' | perl -pe 's/\r\n/\\n/g; s/\r\n/\\n/g;') 
+
+                  # 處理雙引號為單引號, 換行符號, 避免 slack api 錯誤
+                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g' | perl -pe 's/\r\n/\\n/g; s/\n/\\n/g;') 
                   # 這邊不能使用 set-output, 結果變數會只有第一行, 要這樣寫才能接受多行
                   {
                     echo 'JSON_RESPONSE<<EOF'
@@ -30,11 +31,12 @@ jobs:
                     echo EOF
                   } >> "$GITHUB_OUTPUT"
 
-            - name: Send Slack
+            - name: Slack Notification
+              uses: rtCamp/action-slack-notify@v2
               env:
-                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-              run: |
-                    curl -X POST -H 'Content-type: application/json' --data '
+                SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+                SLACK_USERNAME: 點對點 Github Action
+                SLACK_CUSTOM_PAYLOAD: '
                     {
                         "username" : "點對點 Github Action 機器人",
                         "icon_emoji" : ":chino-star:",
@@ -88,14 +90,9 @@ jobs:
                                 "fields": [
                                     {
                                         "type": "mrkdwn",
-                                        "text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
+                                        "text": "*Message*\n${{ steps.extract-and-convert.outputs.description }}"
                                     }
                                 ]
                             }
                         ]
-                    }' $SLACK_WEBHOOK_URL
-
-                    if [ $? -ne 0 ]; then
-                        echo "Failed to send message to Slack"
-                        exit 1
-                    fi
+                    }'
