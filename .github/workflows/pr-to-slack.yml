@@ -80,6 +80,15 @@ jobs:
 					"text": "*Title*\n${{ github.event.pull_request.title }}"
 				}
 			]
+		},
+  		{
+			"type": "section",
+			"fields": [
+				{
+					"type": "mrkdwn",
+					"text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
+				}
+			]
 		}
 	]
 }'
