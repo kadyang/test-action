@@ -22,7 +22,7 @@ jobs:
                   # 置換 <img> 標籤並轉換為 Slack 支持的格式
                   PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
                   # 處理雙引號為單引號, 避免 slack api 錯誤
-                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g') 
+                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g' | perl -pe 's/\n/\\n/g') 
                   # 這邊不能使用 set-output, 結果變數會只有第一行, 要這樣寫才能接受多行
                   {
                     echo 'JSON_RESPONSE<<EOF'
@@ -34,63 +34,68 @@ jobs:
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
               run: |
-                  curl -X POST -H 'Content-type: application/json' --data '
-                  {
-                    "username" : "點對點 Github Action 機器人",
-                    "icon_emoji" : ":chino-star:",
-                    "blocks": [
-                        {
-                            "type": "header",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "有新的 PR 請幫看 :pray:",
-                                "emoji": true
+                    curl -X POST -H 'Content-type: application/json' --data '
+                    {
+                        "username" : "點對點 Github Action 機器人",
+                        "icon_emoji" : ":chino-star:",
+                        "blocks": [
+                            {
+                                "type": "header",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "有新的 PR 請幫看 :pray:",
+                                    "emoji": true
+                                }
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Creator*\n${{ github.event.pull_request.user.login }}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Label*\n${{ github.event.label.name }}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Link*\n<${{ github.event.pull_request.html_url }}>"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Title*\n${{ github.event.pull_request.title }}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
+                                    }
+                                ]
                             }
-                        },
-                        {
-                            "type": "section",
-                            "fields": [
-                                {
-                                    "type": "mrkdwn",
-                                    "text": "*Creator*\n${{ github.event.pull_request.user.login }}"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "section",
-                            "fields": [
-                                {
-                                    "type": "mrkdwn",
-                                    "text": "*Label*\n${{ github.event.label.name }}"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "section",
-                            "fields": [
-                                {
-                                    "type": "mrkdwn",
-                                    "text": "*Link*\n<${{ github.event.pull_request.html_url }}>"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "section",
-                            "fields": [
-                                {
-                                    "type": "mrkdwn",
-                                    "text": "*Title*\n${{ github.event.pull_request.title }}"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "section",
-                            "fields": [
-                                {
-                                    "type": "mrkdwn",
-                                    "text": "*Message*\n## Service Name\n none.\n \n ## Descriptions\n ### Release Note\n 1. Composer update.\n 2. Update TrustProxies.\n 3. When using updateOrCreate, all input data columns should be fillable.\n 4. Update file system env.\n 5. database.php PostgreSQL changed 'schema' to 'search_path'.\n 6. All unvalidated array variables should be brought in.\n 7. Move lang folder to root.\n \n ### env & DB schema\n \n ### JIRA LINK\n https://kkday.atlassian.net/browse/TRAN-2443\n"
-                                }
-                            ]
-                        }
-                    ]
-                  }' $SLACK_WEBHOOK_URL
+                        ]
+                    }' $SLACK_WEBHOOK_URL
+
+                    if [ $? -ne 0 ]; then
+                        echo "Failed to send message to Slack"
+                        exit 1
+                    fi
