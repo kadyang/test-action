@@ -78,7 +78,7 @@ jobs:
                             "fields": [
                                 {
                                     "type": "mrkdwn",
-                                    "text": "*Message*\n${{ PR_DESCRIPTION }}"
+                                    "text": "*Message*\n${PR_DESCRIPTION}"
                                 }
                             ]
                         }
