@@ -1,95 +1,86 @@
 name: PR to Slack
 
 on:
-  pull_request_target:
-    types: [ labeled ]
+    pull_request_target:
+        types: [labeled]
 
 jobs:
-  slackNotification:
-    name: Slack Notification
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      
-      - name: Extract PR description and convert img tags
-        id: extract-and-convert
-        run: |
-          PR_DESCRIPTION=$(jq -r .pull_request.body < "$GITHUB_EVENT_PATH")
-          # 僅擷取到 jira link
-          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -0777 -ne 'print $1 if /(## Service Name\s*.*https:\/\/kkday\.atlassian\.net\/.*?\n)/s')
-          # 置換 <img> 標籤並轉換為 Slack 支持的格式
-          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
-          # 處理雙引號為單引號, 避免 slack api 錯誤
-          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g') 
-          # 這邊不能使用 set-output, 結果變數會只有第一行, 要這樣寫才能接受多行
-          {
-            echo 'JSON_RESPONSE<<EOF'
-            echo $PR_DESCRIPTION
-            echo EOF
-          } >> "$GITHUB_OUTPUT"
+    slackNotification:
+        name: Slack Notification
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
 
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_USERNAME: 點對點 Github Action
-          ENABLE_ESCAPES: true
-          SLACK_CUSTOM_PAYLOAD: '{
-    "username" : "點對點 Github Action 機器人",
-    "icon_emoji" : ":chino-star:",
-	"blocks": [
-		{
-			"type": "header",
-			"text": {
-				"type": "plain_text",
-				"text": "有新的 PR 請幫看 :pray:",
-				"emoji": true
-			}
-		},
-		{
-			"type": "section",
-			"fields": [
-				{
-					"type": "mrkdwn",
-					"text": "*Creator*\n${{ github.event.pull_request.user.login }}"
-				}
-			]
-		},
-		{
-			"type": "section",
-			"fields": [
-				{
-					"type": "mrkdwn",
-					"text": "*Label*\n${{ github.event.label.name }}"
-				}
-			]
-		},
-		{
-			"type": "section",
-			"fields": [
-				{
-					"type": "mrkdwn",
-					"text": "*Link*\n<${{ github.event.pull_request.html_url }}>"
-				}
-			]
-		},
-		{
-			"type": "section",
-			"fields": [
-				{
-					"type": "mrkdwn",
-					"text": "*Title*\n${{ github.event.pull_request.title }}"
-				}
-			]
-		},
-  		{
-			"type": "section",
-			"fields": [
-				{
-					"type": "mrkdwn",
-					"text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
-				}
-			]
-		}
-	]
-}'
+            - name: Extract PR description and convert img tags
+              id: extract-and-convert
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+              run: |
+                  PR_DESCRIPTION=$(jq -r .pull_request.body < "$GITHUB_EVENT_PATH")
+                  # 僅擷取到 jira link
+                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -0777 -ne 'print $1 if /(## Service Name\s*.*https:\/\/kkday\.atlassian\.net\/.*?\n)/s')
+                  # 置換 <img> 標籤並轉換為 Slack 支持的格式
+                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
+                  # 處理雙引號為單引號, 避免 slack api 錯誤
+                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g') 
+                  # 發送 slack
+                  curl -X POST -H 'Content-type: application/json' --data '
+                  {
+                    "username" : "點對點 Github Action 機器人",
+                    "icon_emoji" : ":chino-star:",
+                    "blocks": [
+                        {
+                            "type": "header",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "有新的 PR 請幫看 :pray:",
+                                "emoji": true
+                            }
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Creator*\n${{ github.event.pull_request.user.login }}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Label*\n${{ github.event.label.name }}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Link*\n<${{ github.event.pull_request.html_url }}>"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Title*\n${{ github.event.pull_request.title }}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*Message*\n${{ PR_DESCRIPTION }}"
+                                }
+                            ]
+                        }
+                    ]
+                  }' $SLACK_WEBHOOK_URL
