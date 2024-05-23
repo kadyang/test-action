@@ -1,44 +1,101 @@
-name: Send Slack Notification on PR Labeled
+name: PR to Slack
 
 on:
-  pull_request_target:
-    types:
-      - labeled
+    pull_request_target:
+        types: [labeled]
 
 jobs:
-  send_slack_notification:
-    runs-on: ubuntu-latest
+    slackNotification:
+        name: Slack Notification
+        runs-on: ubuntu-latest
+        steps:
+            # - uses: actions/checkout@v2
 
-    steps:
-      - name: Send message to Slack
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          PR_URL=${{ github.event.pull_request.html_url }}
-          LABEL_NAME=${{ github.event.label.name }}
-          PR_TITLE=$(echo "${{ github.event.pull_request.title }}" | jq --raw-input .)
-          PR_BODY=$(echo "${{ github.event.pull_request.body }}" | jq --raw-input .)
-          SLACK_PAYLOAD=$(jq -n --arg pr_number "$PR_NUMBER" --arg pr_url "$PR_URL" --arg label_name "$LABEL_NAME" --arg pr_title "$PR_TITLE" --arg pr_body "$PR_BODY" '{
-            text: "Pull Request #\($pr_number) has been labeled with \($label_name)",
-            attachments: [
-              {
-                fallback: "View Pull Request",
-                title: $pr_title,
-                text: $pr_body,
-                actions: [
+            - name: Extract PR description and convert img tags
+              id: extract-and-convert
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+              run: |
+                  PR_DESCRIPTION=$(jq -r .pull_request.body < "$GITHUB_EVENT_PATH")
+                  # 僅擷取到 jira link
+                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -0777 -ne 'print $1 if /(## Service Name\s*.*https:\/\/kkday\.atlassian\.net\/.*?\n)/s')
+                  # 置換 <img> 標籤並轉換為 Slack 支持的格式
+                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
+                  # 處理雙引號為單引號, 避免 slack api 錯誤
+                  PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g' | perl -pe 's/\r\n/\\n/g; s/\r\n/\\n/g;') 
+                  # 這邊不能使用 set-output, 結果變數會只有第一行, 要這樣寫才能接受多行
                   {
-                    type: "button",
-                    text: "View Pull Request",
-                    url: $pr_url
-                  }
-                ]
-              }
-            ]
-          }')
-          RESPONSE=$(curl -X POST -H 'Content-type: application/json' --data "$SLACK_PAYLOAD" $SLACK_WEBHOOK_URL)
+                    echo 'JSON_RESPONSE<<EOF'
+                    echo $PR_DESCRIPTION
+                    echo EOF
+                  } >> "$GITHUB_OUTPUT"
 
-          if [ $? -ne 0 ]; then
-            echo "Failed to send message to Slack"
-            exit 1
-          fi
+            - name: Send Slack
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+              run: |
+                    curl -X POST -H 'Content-type: application/json' --data '
+                    {
+                        "username" : "點對點 Github Action 機器人",
+                        "icon_emoji" : ":chino-star:",
+                        "blocks": [
+                            {
+                                "type": "header",
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "有新的 PR 請幫看 :pray:",
+                                    "emoji": true
+                                }
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Creator*\n${{ github.event.pull_request.user.login }}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Label*\n${{ github.event.label.name }}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Link*\n<${{ github.event.pull_request.html_url }}>"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Title*\n${{ github.event.pull_request.title }}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "section",
+                                "fields": [
+                                    {
+                                        "type": "mrkdwn",
+                                        "text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
+                                    }
+                                ]
+                            }
+                        ]
+                    }' $SLACK_WEBHOOK_URL
+
+                    if [ $? -ne 0 ]; then
+                        echo "Failed to send message to Slack"
+                        exit 1
+                    fi
