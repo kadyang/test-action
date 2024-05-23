@@ -88,24 +88,7 @@ jobs:
                             "fields": [
                                 {
                                     "type": "mrkdwn",
-                                    "text": "*Message*\n## Service Name
- none.
- 
- ## Descriptions
- ### Release Note
- 1. Composer update.
- 2. Update TrustProxies.
- 3. When using updateOrCreate, all input data columns should be fillable.
- 4. Update file system env.
- 5. database.php PostgreSQL changed 'schema' to 'search_path'.
- 6. All unvalidated array variables should be brought in.
- 7. Move lang folder to root.
- 
- ### env & DB schema
- 
- ### JIRA LINK
- https://kkday.atlassian.net/browse/TRAN-2443
-"
+                                    "text": "*Message*\n## Service Name\n none.\n \n ## Descriptions\n ### Release Note\n 1. Composer update.\n 2. Update TrustProxies.\n 3. When using updateOrCreate, all input data columns should be fillable.\n 4. Update file system env.\n 5. database.php PostgreSQL changed 'schema' to 'search_path'.\n 6. All unvalidated array variables should be brought in.\n 7. Move lang folder to root.\n \n ### env & DB schema\n \n ### JIRA LINK\n https://kkday.atlassian.net/browse/TRAN-2443\n"
                                 }
                             ]
                         }
