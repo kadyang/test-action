@@ -16,7 +16,7 @@ jobs:
         run: |
           PR_DESCRIPTION=$(jq -r .pull_request.body < "$GITHUB_EVENT_PATH")
           # 僅擷取到 jira link
-          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -0777 -ne 'print $1 if /(## Service Name\s*.*https:\/\/kkday\.atlassian\.net\/.*?\n)/s' | perl -pe 's/"/'\''/g')
+          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -0777 -ne 'print $1 if /(## Service Name\s*.*https:\/\/kkday\.atlassian\.net\/.*?\n)/s')
           # 置換 <img> 標籤並轉換為 Slack 支持的格式
           PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
           # 處理雙引號為單引號, 避免 slack api 錯誤
