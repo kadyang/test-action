@@ -23,7 +23,17 @@ jobs:
                   PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
                   # 處理雙引號為單引號, 避免 slack api 錯誤
                   PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g') 
-                  # 發送 slack
+                  # 這邊不能使用 set-output, 結果變數會只有第一行, 要這樣寫才能接受多行
+                  {
+                    echo 'JSON_RESPONSE<<EOF'
+                    echo $PR_DESCRIPTION
+                    echo EOF
+                  } >> "$GITHUB_OUTPUT"
+
+            - name: Send Slack
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+              run: |
                   curl -X POST -H 'Content-type: application/json' --data '
                   {
                     "username" : "點對點 Github Action 機器人",
@@ -78,7 +88,7 @@ jobs:
                             "fields": [
                                 {
                                     "type": "mrkdwn",
-                                    "text": "'"${PR_DESCRIPTION}"'"
+                                    "text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
                                 }
                             ]
                         }
