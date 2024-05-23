@@ -9,7 +9,7 @@ jobs:
         name: Slack Notification
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v2
+            # - uses: actions/checkout@v2
 
             - name: Extract PR description and convert img tags
               id: extract-and-convert
@@ -88,7 +88,24 @@ jobs:
                             "fields": [
                                 {
                                     "type": "mrkdwn",
-                                    "text": "*Message*"
+                                    "text": "*Message*\n## Service Name
+ none.
+ 
+ ## Descriptions
+ ### Release Note
+ 1. Composer update.
+ 2. Update TrustProxies.
+ 3. When using updateOrCreate, all input data columns should be fillable.
+ 4. Update file system env.
+ 5. database.php PostgreSQL changed 'schema' to 'search_path'.
+ 6. All unvalidated array variables should be brought in.
+ 7. Move lang folder to root.
+ 
+ ### env & DB schema
+ 
+ ### JIRA LINK
+ https://kkday.atlassian.net/browse/TRAN-2443
+"
                                 }
                             ]
                         }
