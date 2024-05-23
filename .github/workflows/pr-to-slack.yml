@@ -34,7 +34,8 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_USERNAME: 點對點 Github Action
           SLACKIFY_MARKDOWN: true
-          SLACK_MESSAGE: '{
+          ENABLE_ESCAPES: true
+          SLACK_CUSTOM_PAYLOAD: '{
     "username" : "點對點 Github Action 機器人",
     "icon_emoji" : ":chino-star:",
 	"blocks": [
