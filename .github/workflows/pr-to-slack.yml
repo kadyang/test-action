@@ -21,8 +21,8 @@ jobs:
           {
             echo 'JSON_RESPONSE<<EOF'
             echo $PR_DESCRIPTION
-	    echo EOF
-	  } >> "$GITHUB_ENV"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 	  
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
