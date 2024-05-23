@@ -90,7 +90,7 @@ jobs:
                                 "fields": [
                                     {
                                         "type": "mrkdwn",
-                                        "text": "*Message*\n${{ steps.extract-and-convert.outputs.description }}"
+                                        "text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
                                     }
                                 ]
                             }
