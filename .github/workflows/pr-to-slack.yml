@@ -17,11 +17,15 @@ jobs:
           PR_NUMBER=${{ github.event.pull_request.number }}
           PR_URL=${{ github.event.pull_request.html_url }}
           LABEL_NAME=${{ github.event.label.name }}
-          SLACK_PAYLOAD=$(jq -n --arg pr_number "$PR_NUMBER" --arg pr_url "$PR_URL" --arg label_name "$LABEL_NAME" '{
+          PR_TITLE=$(echo "${{ github.event.pull_request.title }}" | jq --raw-input .)
+          PR_BODY=$(echo "${{ github.event.pull_request.body }}" | jq --raw-input .)
+          SLACK_PAYLOAD=$(jq -n --arg pr_number "$PR_NUMBER" --arg pr_url "$PR_URL" --arg label_name "$LABEL_NAME" --arg pr_title "$PR_TITLE" --arg pr_body "$PR_BODY" '{
             text: "Pull Request #\($pr_number) has been labeled with \($label_name)",
             attachments: [
               {
                 fallback: "View Pull Request",
+                title: $pr_title,
+                text: $pr_body,
                 actions: [
                   {
                     type: "button",
