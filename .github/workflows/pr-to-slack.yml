@@ -15,9 +15,13 @@ jobs:
         id: extract-and-convert
         run: |
           PR_DESCRIPTION=$(jq -r .pull_request.body < "$GITHUB_EVENT_PATH")
-          # 使用正則表達式提取 <img> 標籤並轉換為 Slack 支持的格式
-          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ ![image]($1) /g')
-          # echo "::set-output name=description::$PR_DESCRIPTION"
+          # 僅擷取到 jira link
+          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -0777 -ne 'print $1 if /(## Service Name\s*.*https:\/\/kkday\.atlassian\.net\/.*?\n)/s' | perl -pe 's/"/'\''/g')
+          # 置換 <img> 標籤並轉換為 Slack 支持的格式
+          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
+          # 處理雙引號為單引號, 避免 slack api 錯誤
+          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g')
+          # 這邊不能使用 set-output, 結果變數會只有第一行, 要這樣寫才能接受多行
           {
             echo 'JSON_RESPONSE<<EOF'
             echo $PR_DESCRIPTION
