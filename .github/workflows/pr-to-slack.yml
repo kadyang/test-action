@@ -38,8 +38,8 @@ jobs:
                 SLACK_USERNAME: 點對點 Github Action
                 SLACK_CUSTOM_PAYLOAD: '
                     {
-                        "username" : "點對點 Github Action 機器人",
-                        "icon_emoji" : ":chino-star:",
+                        "username": "點對點 Github Action 機器人",
+                        "icon_emoji": ":chino-star:",
                         "blocks": [
                             {
                                 "type": "header",
@@ -48,49 +48,46 @@ jobs:
                                     "text": "有新的 PR 請幫看 :pray:",
                                     "emoji": true
                                 }
-                            },
+                            }
+                        ],
+                        "attachments": [
                             {
-                                "type": "section",
-                                "fields": [
+                                "color": "#AFE1AF",
+                                "blocks": [
                                     {
-                                        "type": "mrkdwn",
-                                        "text": "*Creator*\n${{ github.event.pull_request.user.login }}"
-                                    }
-                                ]
-                            },
-                            {
-                                "type": "section",
-                                "fields": [
+                                        "type": "section",
+                                        "fields": [
+                                            {
+                                                "type": "mrkdwn",
+                                                "text": "*Creator*\n${{ github.event.pull_request.user.login }}"
+                                            },
+                                            {
+                                                "type": "mrkdwn",
+                                                "text": "*Label*\n${{ github.event.label.name }}"
+                                            }
+                                        ]
+                                    },
                                     {
-                                        "type": "mrkdwn",
-                                        "text": "*Label*\n${{ github.event.label.name }}"
-                                    }
-                                ]
-                            },
-                            {
-                                "type": "section",
-                                "fields": [
+                                        "type": "section",
+                                        "fields": [
+                                            {
+                                                "type": "mrkdwn",
+                                                "text": "*Title*\n${{ github.event.pull_request.title }}"
+                                            },
+                                            {
+                                                "type": "mrkdwn",
+                                                "text": "*Link*\n<${{ github.event.pull_request.html_url }}>"
+                                            }
+                                        ]
+                                    },
                                     {
-                                        "type": "mrkdwn",
-                                        "text": "*Link*\n<${{ github.event.pull_request.html_url }}>"
-                                    }
-                                ]
-                            },
-                            {
-                                "type": "section",
-                                "fields": [
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": "*Title*\n${{ github.event.pull_request.title }}"
-                                    }
-                                ]
-                            },
-                            {
-                                "type": "section",
-                                "fields": [
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
+                                        "type": "section",
+                                        "fields": [
+                                            {
+                                                "type": "mrkdwn",
+                                                "text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
