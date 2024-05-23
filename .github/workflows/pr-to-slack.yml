@@ -20,7 +20,7 @@ jobs:
           # 置換 <img> 標籤並轉換為 Slack 支持的格式
           PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/<img[^>]+src="([^"]+)"[^>]*>/ <$1|image> /g')
           # 處理雙引號為單引號, 換行為轉為文字, 避免 slack api 錯誤
-          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g' | perl -pe 's/\n/  /g')
+          PR_DESCRIPTION=$(echo "$PR_DESCRIPTION" | perl -pe 's/"/'\''/g' | perl -pe 's/\n/  /g' | perl -pe 's/#{1,3} (.+)/\*($1)\*/g')
           # 這邊不能使用 set-output, 結果變數會只有第一行, 要這樣寫才能接受多行
           {
             echo 'JSON_RESPONSE<<EOF'
@@ -86,7 +86,7 @@ jobs:
 			"fields": [
 				{
 					"type": "mrkdwn",
-					"text": "*Message*\n## Service Name  none.    ## Descriptions  ### Release Note  1. Composer update.  2. Update TrustProxies.  3. When using updateOrCreate, all input data columns should be fillable.  4. Update file system env.  5. database.php PostgreSQL changed 'schema' to 'search_path'.  6. All unvalidated array variables should be brought in.  7. Move lang folder to root.    ### env & DB schema    ### JIRA LINK  https://kkday.atlassian.net/browse/TRAN-2443"
+					"text": "*Message*\n${{ steps.extract-and-convert.outputs.JSON_RESPONSE }}"
 				}
 			]
 		}
